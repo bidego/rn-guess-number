@@ -1,21 +1,23 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import Colors from '../constants/colors';
-import BText from '../components/BText';
+import BText from './BText';
 import { Ionicons } from '@expo/vector-icons';
 
 const MainButton = props => {
     return (
-        <TouchableOpacity onPress={props.onPress}>
-            <View style={styles.container}>
-                <View style={styles.button}>
-                    <BText style={{...styles.buttonText, ...props.style}}>{props.children}
-                        {props.title}
-                    </BText>
-                    <Ionicons name="logo-dribbble" size={16} color='white' />
+        <View style={styles.ButtonContainer}>
+            <TouchableOpacity activeOpacity={0.6} onPress={props.onPress}>
+                <View style={styles.container}>
+                    <View style={styles.button}>
+                        <BText style={{...styles.buttonText, ...props.style}}>{props.children}
+                            {props.title}
+                        </BText>
+                        <Ionicons name="logo-dribbble" size={16} color='white' />
+                    </View>
                 </View>
-            </View>
-        </TouchableOpacity>
+            </TouchableOpacity>
+        </View>
     )
 }
 
@@ -35,6 +37,10 @@ const styles = StyleSheet.create({
     buttonText: {
         color: 'white',
         fontSize: 15
+    },
+    ButtonContainer: {
+        borderRadius: 25,
+        overflow: 'hidden'
     }
 });
 

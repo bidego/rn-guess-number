@@ -6,7 +6,7 @@ import TitleText from '../components/TitleText';
 import BText from '../components/BText';
 import ResetButton from '../components/ResetButton';
 import ConfirmButton from '../components/ConfirmButton';
-import Colors from '../constants/colors';
+import { Ionicons } from '@expo/vector-icons';
 
 const generateRandomBetween = (min, max, exclude) => {
     min = Math.ceil(min);
@@ -21,10 +21,20 @@ const generateRandomBetween = (min, max, exclude) => {
     }
 
 }
-const renderListItem = (val, round, total) => {
-    let styleClass = (round === total) ? styles.listItemLast : styles.listItem; 
+const renderListItem = (val, round, total, availableHeight) => {
+    let dinamicStyle = function() {
+        if(round === total) {
+            if (availableHeight > 400) {
+                return { width: '80%', backgroundColor: '#ccc' }
+            } else {
+                return { width: '60%', backgroundColor: '#ccc' }
+            };
+        } else {
+            return { width:'60%' }
+        }
+    } 
     return (
-        <View key={val} style={styleClass}>
+        <View key={val} style={{...styles.listItem, ...dinamicStyle()}}>
             <BText>#{round}</BText>
             <BText>{val}</BText>
         </View>
@@ -34,15 +44,27 @@ const GameScreen= props => {
     const initialGuess = generateRandomBetween(1,100,props.userChoice);
     const [ currentGuess, setCurrentGuess ] = useState(initialGuess);
     const [ pastGuesses, setPastGuesses ] = useState([initialGuess]);
+    const [ availableHeight, setAvailableHeight ] = useState(Dimensions.get('window').height);
     const currentLo = useRef(1);
     const currentHi = useRef(100);
 
     const { userChoice, onGameOver } = props;
     useEffect( () => {
+
+        const updateLayout = () => {
+            setAvailableHeight(Dimensions.get('window').height);
+        };
+
         if (currentGuess === props.userChoice) {
             onGameOver(pastGuesses.length);
         }
-    }, [currentGuess, userChoice, onGameOver]);
+        Dimensions.addEventListener('change', updateLayout);
+
+        return () => {
+            Dimensions.removeEventListener('change',updateLayout);
+        }
+        
+    }, [currentGuess, userChoice, onGameOver, setAvailableHeight, Dimensions]);
 
     const handleNextGuess = (direction) => {
         if ((direction == 'lower' && currentGuess < props.userChoice) || (direction == 'greater' && currentGuess > props.userChoice)) {
@@ -58,23 +80,46 @@ const GameScreen= props => {
         setCurrentGuess(nextNumber);
         setPastGuesses(cur => [nextNumber, ...cur] );
     }
-    
-    return (
-        <View style={styles.screen}>
-            <TitleText>Round: {pastGuesses.length}</TitleText>
-            <BText>Opponent's guess:</BText>
+    let gameControls = (
+        <React.Fragment>
             <NumberContainer>{currentGuess}</NumberContainer>
-            <Card style={styles.buttonContainer}>
+            <Card style={{...styles.buttonContainer, marginTop: availableHeight > 600 ? 20 : 5}}>
                 <ResetButton title='LOWER' onPress={handleNextGuess.bind(this,'lower')} />
                 <ConfirmButton title='GREATER' onPress={handleNextGuess.bind(this,'greater')} />
             </Card>
-            <View style={styles.listContainer}>
-                <ScrollView
-                    contentContainerStyle={styles.list}>
-                    {pastGuesses.map((guess, index) => renderListItem(guess, pastGuesses.length - index, pastGuesses.length))}
-                </ScrollView>
+        </React.Fragment>
+    );
+     
+    if (availableHeight < 500) {
+        gameControls =  (
+            <View style={styles.buttonContainer}>
+                <ResetButton onPress={handleNextGuess.bind(this, 'lower')}>
+                    <Ionicons name="md-remove" size={24} color="white" />
+                </ResetButton>
+                <NumberContainer>{currentGuess}</NumberContainer>
+                <ConfirmButton onPress={handleNextGuess.bind(this, 'greater')}>
+                    <Ionicons name="md-add" size={24} color="white" />
+                </ConfirmButton>
             </View>
-        </View>
+        );
+    }
+
+    
+    return (
+        <ScrollView>
+
+            <View style={styles.screen}>
+                <TitleText>Round: {pastGuesses.length}</TitleText>
+                <BText>Opponent's guess:</BText>
+                {gameControls}
+                <View style={styles.listContainer}>
+                    <ScrollView
+                        contentContainerStyle={styles.list}>
+                        {pastGuesses.map((guess, index) => renderListItem(guess, pastGuesses.length - index, pastGuesses.length, availableHeight))}
+                    </ScrollView>
+                </View>
+            </View>
+        </ScrollView>
     )
 }
 
@@ -87,7 +132,6 @@ const styles = StyleSheet.create({
     buttonContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginTop: Dimensions.get('window').height > 600 ? 20 : 5,
         width: 300,
         maxWidth: '80%'
     },
@@ -107,19 +151,7 @@ const styles = StyleSheet.create({
         margin: 10,
         backgroundColor: 'white',
         flexDirection: 'row',
-        justifyContent: 'space-around',
-        width: '60%'
-    },
-    listItemLast: {
-        borderColor: '#ccc',
-        borderWidth: 1,
-        padding: 15,
-        margin: 10,
-        backgroundColor: '#ddd',
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        width: Dimensions.get('window').height > 600 ? '60%' : '80%'
-
+        justifyContent: 'space-around'
     }
 });
 

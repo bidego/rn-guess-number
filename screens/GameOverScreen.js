@@ -10,7 +10,6 @@ import MainButton from '../components/MainButton';
 const GameOverScreen = props => {
     return (
         <ScrollView>
-
             <View style={styles.screen}>
                 <TitleText>The game is Over.</TitleText>
                 <View style={styles.imageContainer}>
